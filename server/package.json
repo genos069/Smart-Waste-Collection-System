@@ -2,7 +2,7 @@
   "name": "server",
   "version": "1.0.0",
   "description": "The Smart Waste Collection System is an IoT-based solution designed to optimize waste management in urban and semi-urban areas. This project focuses on improving the efficiency of garbage collection by using smart sensors, real-time data monitoring, and automated alerts.",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js"
