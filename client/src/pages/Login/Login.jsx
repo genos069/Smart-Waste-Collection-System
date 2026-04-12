@@ -1,59 +1,79 @@
 import React, { useState } from "react";
-import "./Login.css"; // Your CSS file (adapted from original)
+import "./Login.css";
 
 const Login = () => {
   const [showForgot, setShowForgot] = useState(false);
   const [forgotMessage, setForgotMessage] = useState("");
   const [error, setError] = useState("");
-  const [userid, setUserid] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Validate email format
   const validateEmail = (email) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email.toLowerCase());
   };
 
-  // Handle login form submit
+  // ✅ LOGIN
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    // Example fetch request to backend
+    setError("");
+    setLoading(true);
+
+    if (!validateEmail(email)) {
+      setError("Enter a valid email");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch("http://localhost:5000/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userid, password }),
+        body: JSON.stringify({ email, password }),
       });
+
       const data = await res.json();
+
       if (res.ok) {
-        localStorage.setItem("token", data.token);
-        alert(data.message);
-        // TODO: redirect to dashboard
+        // store role
+        localStorage.setItem("userType", data.userType);
+
+        // redirect based on role
+        if (data.userType === "admin") {
+          window.location.href = "/admin-dashboard";
+        } else {
+          window.location.href = "/driver-dashboard";
+        }
       } else {
-        setError(data.message);
+        setError(data.msg || "Login failed");
       }
     } catch (err) {
       console.error(err);
       setError("Server error. Try again later.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Handle forgot password submit
+  // ✅ FORGOT PASSWORD
   const handleForgotSubmit = async (e) => {
     e.preventDefault();
+
     if (!validateEmail(email)) {
       setForgotMessage("Please enter a valid email address.");
       return;
     }
+
     try {
       const res = await fetch("http://localhost:5000/api/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
+
       const data = await res.json();
-      setForgotMessage(data.message);
+      setForgotMessage(data.message || "Check your email.");
     } catch (err) {
       console.error(err);
       setForgotMessage("Server error. Try again later.");
@@ -63,7 +83,7 @@ const Login = () => {
   return (
     <div className="wrapper">
       <div className="container">
-        {/* Form Section */}
+        {/* FORM */}
         <div className="form-box">
           <h1>BMC</h1>
           <h2>Berhampur Municipal Corporation Login</h2>
@@ -74,29 +94,30 @@ const Login = () => {
             <form onSubmit={handleLoginSubmit}>
               <div className="form-group">
                 <input
-                  type="text"
-                  id="userId"
-                  placeholder=" "
+                  type="email"
                   required
-                  value={userid}
-                  onChange={(e) => setUserid(e.target.value)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder=" "
                 />
-                <label htmlFor="userId">User ID</label>
+                <label>Email</label>
               </div>
+
               <div className="form-group">
                 <input
                   type="password"
-                  id="password"
-                  placeholder=" "
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  placeholder=" "
                 />
-                <label htmlFor="password">Password</label>
+                <label>Password</label>
               </div>
-              <button type="submit" className="btn-login">
-                Login
+
+              <button type="submit" className="btn-login" disabled={loading}>
+                {loading ? "Logging in..." : "Login"}
               </button>
+
               <a
                 href="#"
                 className="forgot-link"
@@ -114,17 +135,18 @@ const Login = () => {
               <div className="form-group">
                 <input
                   type="email"
-                  id="forgotEmail"
-                  placeholder=" "
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  placeholder=" "
                 />
-                <label htmlFor="forgotEmail">Enter your registered email</label>
+                <label>Enter your registered email</label>
               </div>
+
               <button type="submit" className="btn-login">
                 Send Reset Link
               </button>
+
               <a
                 href="#"
                 className="forgot-link"
@@ -136,27 +158,19 @@ const Login = () => {
               >
                 ← Back to Login
               </a>
-              <div
-                className="forgot-link"
-                style={{
-                  marginTop: "12px",
-                  textAlign: "left",
-                  color: forgotMessage.includes("valid") ? "red" : "lightgreen",
-                }}
-              >
-                {forgotMessage}
-              </div>
+
+              {forgotMessage && (
+                <p className="forgot-message">{forgotMessage}</p>
+              )}
             </form>
           )}
         </div>
 
-        {/* Map Section */}
+        {/* MAP */}
         <div className="map-box">
           <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3790.4449250318295!2d84.79624801487004!3d19.314961586942732!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a3bc5390f7a87c9%3A0xe9a2f860c6e7b4fc!2sBerhampur%20Municipal%20Corporation!5e0!3m2!1sen!2sin!4v1623318487955!5m2!1sen!2sin"
-            allowFullScreen
+            src="https://www.google.com/maps?q=Berhampur%20Municipal%20Corporation&output=embed"
             loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
             title="BMC Map"
           ></iframe>
         </div>
