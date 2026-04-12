@@ -1,12 +1,13 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser"
 import { fileURLToPath } from "url";
 import path from "path";
-import dotenv from "dotenv";
+import { ENV } from "./lib/ENV.js";
+import { connectDB } from "./lib/db.js";
+import routes from "./routes/allRoutes.js";
+import {simulateBinFill} from "./simulation/binFilling.js"
 
-dotenv.config();
-
-const PORT = process.env.PORT
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -14,29 +15,33 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser())
 
-app.get('/server', (req, res) => {
-    res.status(200).json({ msg: "Server is Running" })
-})
+app.use("/", routes);
 
-if (process.env.NODE_ENV === 'production') {
+app.get("/server", (req, res) => {
+  res.status(200).json({ msg: "Server is Running" });
+});
 
-    const buildPath = path.join(__dirname, '../../client/dist');
+if (ENV.NODE_ENV === "production") {
+  const buildPath = path.join(__dirname, "../../client/dist");
 
-    app.use(express.static(buildPath));
+  app.use(express.static(buildPath));
 
-    app.get('/{*any}', (req, res) => {
-        res.sendFile(path.join(buildPath, 'index.html'));
-    });
+  app.get("/{*any}", (req, res) => {
+    res.sendFile(path.join(buildPath, "index.html"));
+  });
 }
 
-const startServer = () => {
+const startServer = async () => {
   try {
-    app.listen(PORT, () => console.log("Server is running on port:", PORT));
+    await connectDB();
+    setInterval(simulateBinFill, 5000);
+    app.listen(ENV.PORT, () =>
+      console.log("Server is running on port:", ENV.PORT),
+    );
   } catch (error) {
     console.error("💥 Error starting the server", error);
   }
 };
-
 startServer();
-

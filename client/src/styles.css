@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+:root {
+  font-family: Inter, system-ui, Arial, sans-serif;
+  color: #111827;
+  background: #f3f4f6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: #f3f4f6;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  height: 100vh;
+  gap: 12px;
+  padding: 12px;
+}
+
+.sidebar {
+  min-width: 0;
+  overflow: auto;
+}
+
+.map-wrap {
+  min-width: 0;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+.map {
+  height: 100%;
+  width: 100%;
+}
+
+.panel {
+  height: 100%;
+  padding: 16px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+.panel h1 {
+  margin: 0 0 14px;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.card.tiny {
+  padding-bottom: 10px;
+}
+
+.grid-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.label {
+  margin: 0 0 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+}
+
+.value {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  word-break: break-word;
+}
+
+.subtle {
+  margin: 4px 0 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.error {
+  margin-top: 8px;
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.btn {
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #111827;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.btn:hover {
+  opacity: 0.92;
+}
+
+.marker-badge {
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 800;
+  font-size: 12px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.28);
+}
+
+.marker-badge span {
+  transform: translateY(-0.5px);
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .sidebar {
+    order: 2;
+  }
+
+  .map-wrap {
+    order: 1;
+    height: 60vh;
+  }
+}
