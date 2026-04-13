@@ -2,7 +2,11 @@ import mongoose from "mongoose";
 
 const binSchema = new mongoose.Schema(
   {
-    name: String,
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
     coordinates: {
       type: {
         type: String,
@@ -20,11 +24,11 @@ const binSchema = new mongoose.Schema(
       default: 0,
     },
 
-status: { 
-  type: String, 
-  enum: ["idle", "active", "collected"], 
-  default: "idle"
-},
+    status: {
+      type: String,
+      enum: ["idle", "active", "collected"],
+      default: "idle",
+    },
 
     lastEmptiedAt: Date,
   },

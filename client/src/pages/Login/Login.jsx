@@ -1,104 +1,148 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import "./Login.css";
+import { AuthContext } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
-  const [showForgot, setShowForgot] = useState(false);
-  const [forgotMessage, setForgotMessage] = useState("");
-  const [error, setError] = useState("");
-  const [password, setPassword] = useState("");
+  const { setUser, refreshUser } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const [view, setView] = useState("login");
+
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [resetToken, setResetToken] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const validateEmail = (email) => {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email.toLowerCase());
-  };
+  const validateEmail = (email) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  // ✅ LOGIN
+  // ================= LOGIN =================
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    if (!validateEmail(email)) {
-      setError("Enter a valid email");
-      setLoading(false);
-      return;
-    }
-
     try {
-      const res = await fetch("http://localhost:5000/api/login", {
+      const res = await fetch("http://localhost:4000/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
 
-      if (res.ok) {
-        // store role
-        localStorage.setItem("userType", data.userType);
-
-        // redirect based on role
-        if (data.userType === "admin") {
-          window.location.href = "/admin-dashboard";
-        } else {
-          window.location.href = "/driver-dashboard";
-        }
-      } else {
-        setError(data.msg || "Login failed");
+      if (!res.ok) {
+        setError(data.message || "Login failed");
+        return;
       }
+
+      // ✅ IMPORTANT: update context
+      setUser(data.user);
+
+      if (data.user.type === "admin") {
+        navigate("/admin-dashboard");
+      } else if (data.user.type === "driver") {
+        navigate("/driver-dashboard");
+      } else {
+        navigate("/unauthorized"); // or login page
+      }
+      
     } catch (err) {
-      console.error(err);
-      setError("Server error. Try again later.");
+      setError("Server error");
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ FORGOT PASSWORD
+  // ================= FORGOT =================
   const handleForgotSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateEmail(email)) {
-      setForgotMessage("Please enter a valid email address.");
-      return;
-    }
-
     try {
-      const res = await fetch("http://localhost:5000/api/forgot-password", {
+      const res = await fetch("http://localhost:4000/forgot-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ email: forgotEmail }),
       });
 
       const data = await res.json();
-      setForgotMessage(data.message || "Check your email.");
+
+      if (res.ok) {
+        setMessage("Reset token sent. Check backend response.");
+        setView("reset");
+      } else {
+        setMessage(data.message || "Error");
+      }
     } catch (err) {
-      console.error(err);
-      setForgotMessage("Server error. Try again later.");
+      setMessage("Server error");
+    }
+  };
+
+  // ================= RESET =================
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+
+    try {
+      const res = await fetch("http://localhost:4000/reset-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token: resetToken,
+          newPassword,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("Password reset successful");
+        setView("login");
+        setForgotEmail("");
+        setResetToken("");
+        setNewPassword("");
+        setMessage("");
+      } else {
+        setMessage(data.message || "Reset failed");
+      }
+    } catch (err) {
+      setMessage("Server error");
     }
   };
 
   return (
     <div className="wrapper">
       <div className="container">
-        {/* FORM */}
+
         <div className="form-box">
           <h1>BMC</h1>
           <h2>Berhampur Municipal Corporation Login</h2>
 
           {error && <p className="error-message">{error}</p>}
+          {message && <p className="forgot-message">{message}</p>}
 
-          {!showForgot ? (
+          {/* LOGIN */}
+          {view === "login" && (
             <form onSubmit={handleLoginSubmit}>
               <div className="form-group">
                 <input
                   type="email"
-                  required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder=" "
+                  required
                 />
                 <label>Email</label>
               </div>
@@ -106,74 +150,81 @@ const Login = () => {
               <div className="form-group">
                 <input
                   type="password"
-                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder=" "
+                  required
                 />
                 <label>Password</label>
               </div>
 
-              <button type="submit" className="btn-login" disabled={loading}>
+              <button className="btn-login" disabled={loading}>
                 {loading ? "Logging in..." : "Login"}
               </button>
 
-              <a
-                href="#"
-                className="forgot-link"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setShowForgot(true);
-                  setForgotMessage("");
-                }}
-              >
+              <p onClick={() => setView("forgot")} className="forgot-link">
                 Forgot Password?
-              </a>
+              </p>
             </form>
-          ) : (
-            <form onSubmit={handleForgotSubmit}>
-              <div className="form-group">
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder=" "
-                />
-                <label>Enter your registered email</label>
-              </div>
+          )}
 
-              <button type="submit" className="btn-login">
-                Send Reset Link
+          {/* FORGOT */}
+          {view === "forgot" && (
+            <form onSubmit={handleForgotSubmit}>
+              <input
+                type="email"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                required
+              />
+
+              <button className="btn-login">
+                Send Reset Token
               </button>
 
-              <a
-                href="#"
-                className="forgot-link"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setShowForgot(false);
-                  setForgotMessage("");
-                }}
-              >
-                ← Back to Login
-              </a>
+              <p onClick={() => setView("login")} className="forgot-link">
+                Back to Login
+              </p>
+            </form>
+          )}
 
-              {forgotMessage && (
-                <p className="forgot-message">{forgotMessage}</p>
-              )}
+          {/* RESET */}
+          {view === "reset" && (
+            <form onSubmit={handleResetPassword}>
+              <input
+                type="text"
+                placeholder="Token"
+                value={resetToken}
+                onChange={(e) => setResetToken(e.target.value)}
+                required
+              />
+
+              <input
+                type="password"
+                placeholder="New Password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+              />
+
+              <button className="btn-login">
+                Reset Password
+              </button>
+
+              <p onClick={() => setView("login")} className="forgot-link">
+                Back to Login
+              </p>
             </form>
           )}
         </div>
 
-        {/* MAP */}
         <div className="map-box">
           <iframe
-            src="https://www.google.com/maps?q=Berhampur%20Municipal%20Corporation&output=embed"
+            src="https://www.google.com/maps?q=Berhampur Municipal Corporation&output=embed"
             loading="lazy"
             title="BMC Map"
-          ></iframe>
+          />
         </div>
+
       </div>
     </div>
   );
