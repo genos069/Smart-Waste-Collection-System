@@ -53,7 +53,7 @@ const Login = () => {
       if (data.user.type === "admin") {
         navigate("/admin-dashboard");
       } else if (data.user.type === "driver") {
-        navigate("/driver-dashboard");
+        navigate("/truck-dashboard");
       } else {
         navigate("/unauthorized"); // or login page
       }

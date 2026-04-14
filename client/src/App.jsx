@@ -60,7 +60,7 @@ function App() {
       <Route
         path="/truck-dashboard"
         element={
-          <ProtectedRoute role="admin">
+          <ProtectedRoute role="driver">
             <TruckDriverDashboard />
           </ProtectedRoute>
         }

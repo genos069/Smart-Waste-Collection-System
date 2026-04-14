@@ -127,6 +127,8 @@ export const forgotPassword = async (req, res) => {
 
     await admin.save();
 
+    console.log(resetToken)
+
     // In real app: send email
     res.status(200).json({
       success: true,
@@ -158,6 +160,8 @@ export const resetPassword = async (req, res) => {
     admin.resetPasswordExpire = undefined;
 
     await admin.save();
+
+    console.log("Reset pass",admin)
 
     res.status(200).json({
       success: true,
