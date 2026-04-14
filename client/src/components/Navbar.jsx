@@ -8,13 +8,14 @@ import { useNavigate } from "react-router-dom";
 export default function Navbar() {
     const { setUser } = useContext(AuthContext);
     const navigate = useNavigate();
+    const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
     const handleLogout = async() => {
         console.log('Logout clicked');
         try {
-            await fetch("http://localhost:4000/logout", {
+            await fetch(`${BASE_URL}/logout`, {
                 method: "POST",
-                credentials: "include", // 🔥 IMPORTANT
+                credentials: "include", //
             });
 
             // ✅ clear user from context

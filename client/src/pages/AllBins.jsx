@@ -8,7 +8,7 @@ export default function AllBins() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-  const BASE_API = "http://localhost:4000";
+  const BASE_API = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
   // ── Fetch bins ─────────────────────────────────────────────
   const fetchBins = async () => {
