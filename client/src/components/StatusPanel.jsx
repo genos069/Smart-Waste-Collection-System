@@ -31,7 +31,7 @@ export default function StatusPanel({
       <div className="card">
         <p className="label">Next Target</p>
         <p className="value">
-          {currentTarget ? currentTarget.name : "Completed 🎉"}
+          {currentTarget ? currentTarget.name : "Completed"}
         </p>
       </div>
 

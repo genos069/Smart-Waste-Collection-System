@@ -1,21 +1,25 @@
 import express from "express";
 import cors from "cors";
-import cookieParser from "cookie-parser"
+import cookieParser from "cookie-parser";
 import { fileURLToPath } from "url";
 import path from "path";
 import { ENV } from "./lib/ENV.js";
 import { connectDB } from "./lib/db.js";
 import routes from "./routes/allRoutes.js";
-import {simulateBinFill} from "./simulation/binFilling.js"
+import { simulateBinFill } from "./simulation/binFilling.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true,
+}));
+
 app.use(express.json());
-app.use(cookieParser())
+app.use(cookieParser());
 
 app.use("/", routes);
 
