@@ -5,7 +5,7 @@ export default function BinForm({ selectedCoords }) {
   const [coords, setCoords] = useState({ lat: "", lng: "" });
   const [msg, setMsg] = useState("");
 
-  const BASE_API = "http://localhost:4000";
+  const BASE_API = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
   useEffect(() => {
     if (selectedCoords) {

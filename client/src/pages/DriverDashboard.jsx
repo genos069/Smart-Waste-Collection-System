@@ -5,7 +5,7 @@ import { apiGet, apiPost } from "../services/api";
 import { haversineDistance } from "../utils/haversine";
 import { getRoute, extractSteps } from "../utils/routing";
 
-const PROXIMITY_LIMIT_METERS = 50;
+const PROXIMITY_LIMIT_METERS = 50000;
 
 export default function DriverDashboard() {
   const [tasks, setTasks] = useState(null);
