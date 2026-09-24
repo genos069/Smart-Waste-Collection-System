@@ -127,7 +127,7 @@ export const forgotPassword = async (req, res) => {
 
     await admin.save();
 
-    console.log(resetToken)
+    console.log(resetToken);
 
     // In real app: send email
     res.status(200).json({
@@ -161,7 +161,7 @@ export const resetPassword = async (req, res) => {
 
     await admin.save();
 
-    console.log("Reset pass",admin)
+    console.log("Reset pass", admin);
 
     res.status(200).json({
       success: true,
@@ -196,8 +196,8 @@ export const loginAdmin = async (req, res) => {
     // 🔥 SEND COOKIE HERE
     res.cookie("token", token, {
       httpOnly: true,
-      secure: false, // true in production (https)
-      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
