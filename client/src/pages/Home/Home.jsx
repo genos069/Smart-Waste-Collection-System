@@ -104,11 +104,7 @@ const Home = () => {
         <div className="navbar">
           <div className="image">
             {!menuOpen && (
-              <img
-                src="/truck.jpg"
-                alt="Bin Logo"
-                className="logo-img"
-              />
+              <img src="/truck.png" alt="Bin Logo" className="logo-img" />
             )}
           </div>
 
@@ -215,10 +211,7 @@ const Home = () => {
           <div className="box-container">
             <div className="box">
               <div className="logo">
-                <img
-                  src="/about.svg"
-                  alt=""
-                />
+                <img src="/about.svg" alt="" className="about-icon" />
               </div>
               <div>
                 <a href="https://www.berhampur.gov.in/explore/">
@@ -229,10 +222,7 @@ const Home = () => {
 
             <div className="box">
               <div className="logo">
-                <img
-                  src="/service.png"
-                  alt=""
-                />
+                <img src="/t_service.png" alt="" className="service-icon" />
               </div>
               <div>
                 <a href="https://www.berhampur.gov.in/services/">Services</a>
