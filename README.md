@@ -37,3 +37,19 @@ Existing endpoint paths and access rules are preserved:
 - `cd client` then `npm run build`: production frontend build.
 
 The HTTP tests do not replace integration testing with a configured MongoDB and real login session.
+
+## Redesigned admin pages
+
+The five admin pages use the layout and animations from the supplied redesign ZIP, adapted to the existing routes:
+
+| Page | Route | Data / actions |
+| --- | --- | --- |
+| Overview | `/admin-dashboard` | Live bin counts, fill averages, priority queue, Leaflet map, current user and logout |
+| Bin management | `/all-bins` | Search, status filter, selection, individual/bulk/all deletion |
+| Add a smart bin | `/admin-map` | Click the real map or enter coordinates; save through the bin service |
+| Team access | `/user-list` | Saved users, real roles and timestamps, search and removal |
+| Add a team member | `/create-users` | Create an `admin` or `driver` account |
+
+Bin screens normalize MongoDB `_id`, `fillLevel`, and GeoJSON `[longitude, latitude]` through `utils/adminData.js`. Pickup priority starts at 75%; 50–74% is filling. Counts and averages handle empty inventories. The overview and bin list refresh every 15 seconds, and mutation screens refresh after saves/deletions. Loading, error, retry, empty and pending-action states are included.
+
+The demo's unsupported districts, dispatch actions, online-driver counts, historical trends, and device-pairing promises were replaced with available data/actions. User timestamps show creation/update times rather than invented last-active times. Styling is scoped under `.admin-redesign` so public/login/driver pages retain their styles. The existing `/me` cookie endpoint restores sessions after page refresh.

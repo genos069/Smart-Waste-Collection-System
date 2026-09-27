@@ -1,62 +1,60 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
 import BinMap from "../../components/BinMap";
-import BinForm from "../../components/BinForm";
+import Icon from "../../components/admin/Icon";
+import RequestState from "../../components/admin/RequestState";
+import { createBin, getBins } from "../../services/binService";
+import useRemoteData from "../../hooks/useRemoteData";
+import { normalizeBin } from "../../utils/adminData";
 
 export default function AdminMapPage() {
   const navigate = useNavigate();
+  const onBack = () => navigate("/admin-dashboard");
+  const { data, loading, error, refresh } = useRemoteData(getBins);
+  const bins = useMemo(() => (data?.data || []).map(normalizeBin), [data]);
+  const [coords, setCoords] = useState({ lat: "", lng: "" });
+  const [name, setName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const lat = Number(coords.lat);
+  const lng = Number(coords.lng);
+  const valid = coords.lat !== "" && coords.lng !== "" && Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
+  const selectedCoords = valid ? { lat, lng } : null;
+  const submit = async (event) => {
+    event.preventDefault();
+    if (saving) return;
+    if (!name.trim() || !valid) { setSubmitError("Enter a bin name and valid latitude and longitude."); return; }
+    setSaving(true); setSubmitError("");
+    try { await createBin({ name: name.trim(), lat, lng }); navigate("/all-bins"); }
+    catch (err) { setSubmitError(err.message); }
+    finally { setSaving(false); }
+  };
 
-  const [selectedCoords, setSelectedCoords] = useState({ lat: 0, lng: 0 });
-
-  return (
-    <div className="flex flex-col h-screen bg-gray-100">
-
-      <div className="shrink-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 shadow-sm">
-
-        <button
-          onClick={() => navigate(-1)}
-          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600 transition"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-
-        <h1 className="font-semibold text-gray-800">Return to Admin Dashboard</h1>
-
-        {(selectedCoords.lat !== 0 || selectedCoords.lng !== 0) && (
-          <span className="ml-auto text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-3 py-1 font-mono">
-            📍 {selectedCoords.lat.toFixed(5)}, {selectedCoords.lng.toFixed(5)}
-          </span>
-        )}
-
+  return <div className="admin-redesign"><div className="map-page">
+    <header className="compact-header">
+      <button className="back-button" aria-label="Back to dashboard" onClick={onBack}>←</button>
+      <div><p className="eyebrow">Network inventory</p><h1>Add a smart bin</h1></div>
+      {valid && <span className="coordinate-pill"><i />{lat.toFixed(5)}, {lng.toFixed(5)}</span>}
+    </header>
+    <div className="map-workspace">
+      <div className="picker-map">
+        {!loading && <BinMap bins={bins} selectedCoords={selectedCoords} setSelectedCoords={setCoords} />}
+        <div className="map-instruction"><span className="soft-icon green"><Icon name="map" /></span><span><strong>Choose a location</strong><small>Click the map or enter coordinates in the form</small></span></div>
       </div>
-
-      <div className="flex-1 flex overflow-hidden">
-
-        <div className="flex-1 relative">
-
-          <BinMap setSelectedCoords={setSelectedCoords} />
-
-          {selectedCoords.lat === 0 && selectedCoords.lng === 0 && (
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[500] bg-black/70 text-white text-sm px-4 py-2 rounded-full pointer-events-none">
-              👆 Click anywhere on the map to pick a location
-            </div>
-          )}
-
-        </div>
-
-        <div className="w-80 shrink-0 bg-white border-l border-gray-200 overflow-y-auto shadow-xl">
-
-          <div className="p-5">
-
-            <BinForm selectedCoords={selectedCoords} />
-
-          </div>
-
-        </div>
-
-      </div>
-
+      <aside className="map-form-panel">
+        <span className="step">01</span><h2>Bin details</h2>
+        <p className="subtitle">Give this collection point a clear name and select its location.</p>
+        <RequestState loading={loading} error={error} onRetry={refresh} />
+        <form onSubmit={submit}>
+          <label>Location name<input required value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. BMC Market Street" /></label>
+          <label>Latitude<input required type="number" step="any" min="-90" max="90" value={coords.lat} onChange={(event) => setCoords({ ...coords, lat: event.target.value })} placeholder="e.g. 19.35767" /></label>
+          <label>Longitude<input required type="number" step="any" min="-180" max="180" value={coords.lng} onChange={(event) => setCoords({ ...coords, lng: event.target.value })} placeholder="e.g. 84.87178" /></label>
+          <div className="setup-note"><Icon name="leaf" /><p><strong>Ready to monitor</strong><span>This bin will appear on your dashboard and in the collection network after saving.</span></p></div>
+          {submitError && <p className="request-message error-message" role="alert">{submitError}</p>}
+          <button className="primary-button full-button" disabled={saving}><Icon name="plus" />{saving ? "Saving…" : "Add bin to network"}</button>
+          <button type="button" className="secondary-button full-button" onClick={onBack}>Cancel</button>
+        </form>
+      </aside>
     </div>
-  );
+  </div></div>;
 }
