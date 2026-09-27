@@ -49,8 +49,6 @@ export default function AdminMapPage() {
 
           <div className="p-5">
 
-            <h2 className="text-base font-semibold text-gray-800 mb-1">Click the map to auto-fill coordinates.</h2>
-
             <BinForm selectedCoords={selectedCoords} />
 
           </div>
