@@ -1,127 +1,49 @@
-import Admin from "../models/Admin.js";
+import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
+import { env, cookieOptions } from "../config/env.js";
+import { email, password, HttpError } from "../utils/validation.js";
+import { sendPasswordReset, resetDeliveryAvailable } from "../services/passwordResetEmail.js";
+const digest = (value) => crypto.createHash("sha256").update(value).digest("hex");
+const publicUser = (user) => ({ id: user._id, name: user.firstName, type: user.type });
 
-export const forgotPassword = async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    const admin = await Admin.findOne({ email });
-
-    if (!admin) {
-      return res.status(404).json({ message: "Admin not found" });
+export async function login(req, res) {
+  const address = email(req.body?.email);
+  const value = req.body?.password;
+  if (typeof value !== "string" || !value || Buffer.byteLength(value) > 72) throw new HttpError(400, "Password is required and must not exceed 72 UTF-8 bytes");
+  const user = await User.findOne({ email: address }).collation({ locale: "en", strength: 2 }).select("+password +sessionVersion");
+  if (!user || !await bcrypt.compare(value, user.password)) throw new HttpError(401, "Invalid credentials");
+  const token = jwt.sign({ id: user._id, type: user.type, version: user.sessionVersion || 0 }, env.jwtSecret, { expiresIn: "7d", algorithm: "HS256" });
+  res.cookie("token", token, { ...cookieOptions(), maxAge: 7 * 24 * 60 * 60 * 1000 });
+  res.json({ success: true, message: "Login successful", user: publicUser(user) });
+}
+export async function forgotPassword(req, res) {
+  const address = email(req.body?.email);
+  if (!resetDeliveryAvailable()) throw new HttpError(503, "Password reset email is not configured");
+  const token = crypto.randomBytes(32).toString("hex");
+  const hash = digest(token);
+  const user = await User.findOneAndUpdate({ email: address }, { $set: { resetPasswordToken: hash, resetPasswordExpire: new Date(Date.now() + 600000) } }, { new: true, collation: { locale: "en", strength: 2 } });
+  if (user) {
+    try { await sendPasswordReset(user.email, token); }
+    catch (err) {
+      await User.updateOne({ _id: user._id, resetPasswordToken: hash }, { $unset: { resetPasswordToken: 1, resetPasswordExpire: 1 } });
+      throw err;
     }
-
-    // create reset token
-    const resetToken = crypto.randomBytes(32).toString("hex");
-
-    // hash token before saving
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
-
-    admin.resetPasswordToken = hashedToken;
-    admin.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 min
-
-    await admin.save();
-
-
-    // In real app: send email
-    res.status(200).json({
-      success: true,
-      message: "Reset token generated",
-      resetToken, // send only in dev
-    });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
   }
-};
-
-export const resetPassword = async (req, res) => {
-  try {
-    const { token, newPassword } = req.body;
-
-    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
-
-    const admin = await Admin.findOne({
-      resetPasswordToken: hashedToken,
-      resetPasswordExpire: { $gt: Date.now() },
-    });
-
-    if (!admin) {
-      return res.status(400).json({ message: "Invalid or expired token" });
-    }
-
-    admin.password = await bcrypt.hash(newPassword, 10);
-    admin.resetPasswordToken = undefined;
-    admin.resetPasswordExpire = undefined;
-
-    await admin.save();
-
-
-    res.status(200).json({
-      success: true,
-      message: "Password reset successful",
-    });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-export const loginAdmin = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    const check = await Admin.findOne({ email });
-    if (!check) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
-
-    const isMatch = await bcrypt.compare(password, check.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
-
-    // create token (JWT)
-    const token = jwt.sign(
-      { id: check._id, type: check.type },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" },
-    );
-
-    // 🔥 SEND COOKIE HERE
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    res.status(200).json({
-      success: true,
-      message: "Login successful",
-      user: {
-        id: check._id,
-        name: check.firstName,
-        type: check.type,
-      },
-    });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-export const logout = (req, res) => {
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  res.json({ success: true, message: "If the account exists, password reset instructions have been sent.", ...(user && env.nodeEnv !== "production" && env.exposeResetToken ? { resetToken: token } : {}) });
+}
+export async function resetPassword(req, res) {
+  const token = req.body?.token;
+  if (typeof token !== "string" || !/^[a-f0-9]{64}$/i.test(token)) throw new HttpError(400, "Invalid or expired token");
+  const hashedPassword = await bcrypt.hash(password(req.body?.newPassword), 12);
+  // Consume once atomically; concurrent reset attempts cannot reuse the token.
+  const user = await User.findOneAndUpdate({ resetPasswordToken: digest(token), resetPasswordExpire: { $gt: new Date() } }, {
+    $set: { password: hashedPassword }, $unset: { resetPasswordToken: 1, resetPasswordExpire: 1 }, $inc: { sessionVersion: 1 },
   });
-  res.json({ message: "Logged out" });
-};
-
-export const getMe = (req, res) => {
-  res.json({ user: { id: req.user._id, name: req.user.firstName, type: req.user.type } });
-};
+  if (!user) throw new HttpError(400, "Invalid or expired token");
+  res.clearCookie("token", cookieOptions());
+  res.json({ success: true, message: "Password reset successful. Please log in again." });
+}
+export const logout = (req, res) => { res.clearCookie("token", cookieOptions()); res.json({ message: "Logged out" }); };
+export const getMe = (req, res) => res.json({ user: publicUser(req.user) });

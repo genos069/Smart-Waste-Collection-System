@@ -53,9 +53,9 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      await forgotPassword(forgotEmail);
-
-      setMessage("Reset token sent. Check backend response.");
+      const result = await forgotPassword(forgotEmail);
+      setResetToken(result.resetToken || "");
+      setMessage(result.message);
       setView("reset");
     } catch (err) {
       setMessage(err.message);

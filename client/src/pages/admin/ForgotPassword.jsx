@@ -11,7 +11,7 @@ export default function ForgotPassword() {
     try {
       const data = await forgotPassword(email);
 
-      setMsg(data.message);
+      setMsg(data.resetToken ? `${data.message} Development token: ${data.resetToken}` : data.message);
     } catch (err) {
       setMsg(err.message);
     }

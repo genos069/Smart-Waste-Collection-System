@@ -4,26 +4,26 @@
 
 Use Node.js 22.12+ (or a newer supported LTS release).
 
-1. In `server`, run `npm ci`. Create `.env` with `DB_URL`, `JWT_SECRET`, `PORT=4000`, and `CLIENT_URL=http://localhost:5173`, then run `npm run dev`.
+1. In `server`, run `npm ci` and copy `.env.example` to `.env`. Set `DB_URL` to a MongoDB replica set or Atlas, `JWT_SECRET` to a random secret of at least 32 characters, and `CLIENT_URL` to your frontend origin. Then run `npm run dev`.
 2. In `client`, run `npm ci`. Set `VITE_API_URL=http://localhost:4000/api` in `.env`, then run `npm run dev`.
 
 `VITE_API_URL` accepts a backend origin or a URL ending in `/api`, with or without a trailing slash. Restart Vite after changing it. For deployment, set it to your backend URL and set the backend's `CLIENT_URL` to the exact frontend origin; requests use authentication cookies.
 
 ## Backend routes
 
-`server/src/app.js` configures middleware and mounts `routes/index.js` at `/api`. `server.js` starts the database connection, simulation and HTTP listener. Route modules import feature controllers; authentication middleware lives in `middlewares/auth.js`.
+`server/src/app.js` configures middleware and mounts `routes/index.js` at `/api`. `server.js` starts the database connection, simulation and HTTP listener. Route modules import feature controllers; authentication middleware lives in `middleware/auth.js`.
 
-Existing endpoint paths and access rules are preserved:
+Existing endpoint paths are retained. Bin/user/location management requires an admin; task/location/collection operations require a driver:
 
 | Module | Endpoints (all prefixed by `/api`) |
 | --- | --- |
 | authRoutes | POST `/login`, `/logout`, `/forgot-password`, `/reset-password`; GET `/me` |
-| adminRoutes | POST `/createAdmins`; GET `/allAdmins`, `/adminsById/:id`; PUT `/updateAdmin/:id`; DELETE `/deleteAdmin/:id` |
-| binRoutes | POST `/pickups`, `/collect-bin`, `/seed/bins`; GET `/allBins`; DELETE `/deleteBin/:id`, `/deleteAllBins` |
+| userRoutes | POST `/createAdmins`; GET `/allAdmins`, `/adminsById/:id`; PUT `/updateAdmin/:id`; DELETE `/deleteAdmin/:id` |
+| binRoutes | POST `/pickups`, `/seed/bins`; GET `/allBins`; DELETE `/deleteBin/:id`, `/deleteAllBins` |
 | taskRoutes | GET `/tasks` |
 | truckRoutes | POST `/location` |
 | locationRoutes | POST `/seed/locations` |
-| workflowRoutes | POST `/update-status` |
+| collectionRoutes | POST `/update-status`, `/collect-bin` |
 | index | GET `/health` |
 
 ## Frontend services
@@ -53,3 +53,7 @@ The five admin pages use the layout and animations from the supplied redesign ZI
 Bin screens normalize MongoDB `_id`, `fillLevel`, and GeoJSON `[longitude, latitude]` through `utils/adminData.js`. Pickup priority starts at 75%; 50–74% is filling. Counts and averages handle empty inventories. The overview and bin list refresh every 15 seconds, and mutation screens refresh after saves/deletions. Loading, error, retry, empty and pending-action states are included.
 
 The demo's unsupported districts, dispatch actions, online-driver counts, historical trends, and device-pairing promises were replaced with available data/actions. User timestamps show creation/update times rather than invented last-active times. Styling is scoped under `.admin-redesign` so public/login/driver pages retain their styles. The existing `/me` cookie endpoint restores sessions after page refresh.
+
+## Backend cleanup and migration
+
+Read [BACKEND_AUDIT.md](BACKEND_AUDIT.md) for the complete findings, renamed/deleted files, changed business rules, required setup, and verification limits. Simulation now runs only with `SIMULATE_BINS=true`. Production password resets require SMTP. Account data remains in the existing MongoDB `admins` collection.

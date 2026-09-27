@@ -1,14 +1,10 @@
 import { Router } from "express";
-import { createBin, collectBin, seedBins, getAllBins, deleteBin, deleteAllBins } from "../controllers/binController.js";
-import { protect, isAdmin } from "../middlewares/auth.js";
-
+import { createBin, seedBins, getAllBins, deleteBin, deleteAllBins } from "../controllers/binController.js";
+import { protect, allowRoles } from "../middleware/auth.js";
 const router = Router();
-
-router.post("/pickups", createBin);
-router.post("/collect-bin", collectBin);
-router.post("/seed/bins", seedBins);
-router.get("/allBins", protect, isAdmin, getAllBins);
-router.delete("/deleteBin/:id", protect, isAdmin, deleteBin);
-router.delete("/deleteAllBins", protect, isAdmin, deleteAllBins);
-
+router.post("/pickups", protect, allowRoles("admin"), createBin);
+router.post("/seed/bins", protect, allowRoles("admin"), seedBins);
+router.get("/allBins", protect, allowRoles("admin"), getAllBins);
+router.delete("/deleteBin/:id", protect, allowRoles("admin"), deleteBin);
+router.delete("/deleteAllBins", protect, allowRoles("admin"), deleteAllBins);
 export default router;
