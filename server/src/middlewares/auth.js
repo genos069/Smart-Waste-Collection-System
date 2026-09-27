@@ -1,5 +1,4 @@
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
 import Admin from "../models/Admin.js";
 
 export const protect = async (req, res, next) => {
@@ -37,22 +36,4 @@ export const isDriver = (req, res, next) => {
     return res.status(403).json({ message: "Drivers only" });
   }
   next();
-};
-
-export const getMe = async (req, res) => {
-  try {
-    const token = req.cookies.token;
-
-    if (!token) {
-      return res.status(401).json({ message: "No token" });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    res.json({
-      user: decoded, // or fetch from DB
-    });
-  } catch (err) {
-    return res.status(401).json({ message: "Invalid token" });
-  }
 };

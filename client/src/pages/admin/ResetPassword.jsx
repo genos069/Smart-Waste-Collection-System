@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { resetPassword } from "../../services/adminApi";
+import { resetPassword } from "../../services/authService";
 
 export default function ResetPassword() {
   const [form, setForm] = useState({
@@ -15,10 +15,13 @@ export default function ResetPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const res = await resetPassword(form);
-    const data = await res.json();
+    try {
+      const data = await resetPassword(form);
 
-    setMsg(data.message);
+      setMsg(data.message);
+    } catch (err) {
+      setMsg(err.message);
+    }
   };
 
   return (

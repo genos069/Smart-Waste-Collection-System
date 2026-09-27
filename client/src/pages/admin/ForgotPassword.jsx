@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { forgotPassword } from "../../services/adminApi";
+import { forgotPassword } from "../../services/authService";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -8,10 +8,13 @@ export default function ForgotPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const res = await forgotPassword(email);
-    const data = await res.json();
+    try {
+      const data = await forgotPassword(email);
 
-    setMsg(data.message);
+      setMsg(data.message);
+    } catch (err) {
+      setMsg(err.message);
+    }
   };
 
   return (

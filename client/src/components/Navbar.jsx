@@ -1,3 +1,4 @@
+import { logout } from "../services/authService";
 import { LogOut } from "lucide-react";
 import Bin from "../assets/bin.svg";
 
@@ -8,15 +9,12 @@ import { useNavigate } from "react-router-dom";
 export default function Navbar() {
     const { setUser } = useContext(AuthContext);
     const navigate = useNavigate();
-    const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
 
     const handleLogout = async () => {
         console.log('Logout clicked');
         try {
-            await fetch(`${BASE_URL}/logout`, {
-                method: "POST",
-                credentials: "include", //
-            });
+            await logout();
 
             // ✅ clear user from context
             setUser(null);
@@ -25,7 +23,7 @@ export default function Navbar() {
             navigate("/login");
 
         } catch (err) {
-            console.error("Logout failed");
+            console.error("Logout failed", err);
         }
     };
 

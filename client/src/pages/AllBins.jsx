@@ -1,3 +1,4 @@
+import { getBins, deleteBin as removeBin, deleteAllBins as removeAllBins } from "../services/binService";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -6,22 +7,21 @@ export default function AllBins() {
   const [bins, setBins] = useState([]);
   const [selected, setSelected] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const navigate = useNavigate();
-  const BASE_API = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
 
   // ── Fetch bins ─────────────────────────────────────────────
   const fetchBins = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_API}/allBins`, {
-        credentials: "include",
-      });
-      const data = await res.json();
+      setError("");
+      const data = await getBins();
 
       setBins(data.data || []);
     } catch (err) {
-      console.error("[AllBins] fetch error:", err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -34,27 +34,25 @@ export default function AllBins() {
   // ── Delete single bin ─────────────────────────────────────
   const deleteBin = async (id) => {
     try {
-      await fetch(`${BASE_API}/deleteBin/${id}`, {
-        method: "DELETE",
-      });
+      setError("");
+      await removeBin(id);
 
       fetchBins();
     } catch (err) {
-      console.error(err);
+      setError(err.message);
     }
   };
 
   // ── Delete all bins ───────────────────────────────────────
   const deleteAllBins = async () => {
     try {
-      await fetch(`${BASE_API}/deleteAllBins`, {
-        method: "DELETE",
-      });
+      setError("");
+      await removeAllBins();
 
       setSelected([]);
       fetchBins();
     } catch (err) {
-      console.error(err);
+      setError(err.message);
     }
   };
 
@@ -117,6 +115,8 @@ export default function AllBins() {
           </div>
 
         </div>
+
+        {error && <p role="alert" className="mb-4 text-red-600">{error}</p>}
 
         {/* Table */}
         <div className="overflow-x-auto bg-white shadow-md rounded-2xl">
