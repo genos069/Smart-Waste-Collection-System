@@ -108,7 +108,7 @@ export default function BinForm({ selectedCoords }) {
           <p className="mb-3 text-xs leading-5 text-gray-500">
             Click the map to fill these automatically, or enter them below.
           </p>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3">
             <div className="min-w-0">
               <label htmlFor="bin-lat" className="mb-1.5 block text-xs font-medium text-gray-600">
                 Latitude <span className="text-red-500">*</span>
