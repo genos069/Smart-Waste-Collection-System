@@ -1,10 +1,11 @@
+import { login, forgotPassword, resetPassword } from "../../services/authService";
 import React, { useState, useContext } from "react";
 import "./Login.css";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
-  const { setUser, refreshUser } = useContext(AuthContext);
+  const { setUser } = useContext(AuthContext);
   const navigate = useNavigate();
   const [view, setView] = useState("login");
 
@@ -19,10 +20,6 @@ const Login = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
-
-  const validateEmail = (email) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   // ================= LOGIN =================
   const handleLoginSubmit = async (e) => {
@@ -31,21 +28,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const res = await fetch(`${BASE_URL}/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.message || "Login failed");
-        return;
-      }
+      const data = await login({ email, password });
 
       // ✅ IMPORTANT: update context
       setUser(data.user);
@@ -57,9 +40,9 @@ const Login = () => {
       } else {
         navigate("/unauthorized"); // or login page
       }
-      
+
     } catch (err) {
-      setError("Server error");
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -70,25 +53,12 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      const res = await fetch(`${BASE_URL}/forgot-password`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ email: forgotEmail }),
-      });
+      await forgotPassword(forgotEmail);
 
-      const data = await res.json();
-
-      if (res.ok) {
-        setMessage("Reset token sent. Check backend response.");
-        setView("reset");
-      } else {
-        setMessage(data.message || "Error");
-      }
+      setMessage("Reset token sent. Check backend response.");
+      setView("reset");
     } catch (err) {
-      setMessage("Server error");
+      setMessage(err.message);
     }
   };
 
@@ -97,31 +67,16 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      const res = await fetch(`${BASE_URL}/reset-password`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token: resetToken,
-          newPassword,
-        }),
-      });
+      await resetPassword({ token: resetToken, newPassword });
 
-      const data = await res.json();
-
-      if (res.ok) {
-        alert("Password reset successful");
-        setView("login");
-        setForgotEmail("");
-        setResetToken("");
-        setNewPassword("");
-        setMessage("");
-      } else {
-        setMessage(data.message || "Reset failed");
-      }
+      alert("Password reset successful");
+      setView("login");
+      setForgotEmail("");
+      setResetToken("");
+      setNewPassword("");
+      setMessage("");
     } catch (err) {
-      setMessage("Server error");
+      setMessage(err.message);
     }
   };
 

@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import MapView from "../components/MapView";
 import StatusPanel from "../components/StatusPanel";
-import { apiGet, apiPost } from "../services/api";
+import { getTasks } from "../services/taskService";
+import { updateLocation } from "../services/truckService";
+import { updateStatus } from "../services/workflowService";
 import { haversineDistance } from "../utils/haversine";
-import { getRoute, extractSteps } from "../utils/routing";
+import { getRoute } from "../services/routingService";
+import { extractSteps } from "../utils/routing";
 
 const PROXIMITY_LIMIT_METERS = 50000;
 
@@ -21,7 +24,7 @@ export default function DriverDashboard() {
   const [eta, setEta] = useState(null);
 
   const loadTasks = async () => {
-    const data = await apiGet("/tasks");
+    const data = await getTasks();
     setTasks(data);
   };
 
@@ -40,7 +43,7 @@ export default function DriverDashboard() {
           lng: pos.coords.longitude
         };
         setUserLocation(loc);
-        await apiPost("/location", loc);
+        await updateLocation(loc);
       },
       console.error,
       { enableHighAccuracy: true }
@@ -125,7 +128,7 @@ export default function DriverDashboard() {
     const type =
       currentTarget.id === "warehouse" ? "warehouse" : "pickup";
 
-    await apiPost("/update-status", {
+    await updateStatus({
       type,
       id: currentTarget.id
     });

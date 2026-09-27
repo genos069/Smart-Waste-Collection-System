@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createAdmin } from "../../services/adminApi";
+import { createAdmin } from "../../services/adminService";
 
 export default function CreateAdmin() {
   const [form, setForm] = useState({
@@ -16,18 +16,21 @@ export default function CreateAdmin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const res = await createAdmin(form);
-    const data = await res.json();
+    try {
+      const data = await createAdmin(form);
 
-    alert(data.message || "User created");
+      alert(data.message || "User created");
 
-    setForm({
-      firstName: "",
-      lastName: "",
-      email: "",
-      password: "",
-      type: "admin",
-    });
+      setForm({
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+        type: "admin",
+      });
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   return (

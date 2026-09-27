@@ -1,33 +1,29 @@
-const API_BASE = import.meta.env.VITE_API_URL;
+export function normalizeApiBase(value) {
+  const base = (value?.trim() || "http://localhost:4000").replace(/\/+$/, "");
+  return base.endsWith("/api") ? base : `${base}/api`;
+}
 
-async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE}${path}`, {
+const API_BASE = normalizeApiBase(import.meta.env?.VITE_API_URL);
+
+export async function request(path, options = {}) {
+  const response = await fetch(`${API_BASE}/${path.replace(/^\/+/, "")}`, {
+    ...options,
     credentials: "include",
     headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
+      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...options.headers,
     },
-    ...options,
   });
-
-  let data = {};
-
-  try {
-    data = await response.json();
-  } catch {
-    data = {};
-  }
-
+  const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(data.error || `Request failed (${response.status})`);
+    const error = new Error(data.message || data.error || `Request failed (${response.status})`);
+    error.status = response.status;
+    throw error;
   }
-
   return data;
 }
 
 export const apiGet = (path) => request(path);
-export const apiPost = (path, body) =>
-  request(path, {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
+export const apiPost = (path, body) => request(path, { method: "POST", body: JSON.stringify(body) });
+export const apiPut = (path, body) => request(path, { method: "PUT", body: JSON.stringify(body) });
+export const apiDelete = (path) => request(path, { method: "DELETE" });

@@ -1,3 +1,4 @@
+import { createBin } from "../services/binService";
 import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle2, LoaderCircle, MapPin, Plus, Trash2 } from "lucide-react";
 
@@ -10,7 +11,6 @@ export default function BinForm({ selectedCoords }) {
   const [message, setMessage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const BASE_API = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
   useEffect(() => {
     if (selectedCoords) {
@@ -40,25 +40,14 @@ export default function BinForm({ selectedCoords }) {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch(`${BASE_API}/pickups`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ name: name.trim(), lat, lng }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setMessage({ type: "error", text: data.message || "Could not add the bin. Please try again." });
-        return;
-      }
+      await createBin({ name: name.trim(), lat, lng });
 
       setMessage({ type: "success", text: "Bin added successfully." });
       setName("");
       setCoords({ lat: "", lng: "" });
     } catch (err) {
       console.error(err);
-      setMessage({ type: "error", text: "Could not connect to the server. Please try again." });
+      setMessage({ type: "error", text: err.message || "Could not connect to the server. Please try again." });
     } finally {
       setIsSubmitting(false);
     }

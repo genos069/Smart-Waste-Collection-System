@@ -2,10 +2,11 @@
   "name": "server",
   "version": "1.0.0",
   "description": "The Smart Waste Collection System is an IoT-based solution designed to optimize waste management in urban and semi-urban areas. This project focuses on improving the efficiency of garbage collection by using smart sensors, real-time data monitoring, and automated alerts.",
-  "main": "server.js",
+  "main": "src/server.js",
   "scripts": {
     "dev": "nodemon src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "test": "node --test"
   },
   "keywords": [],
   "author": "Room 15",
@@ -13,14 +14,14 @@
   "type": "module",
   "dependencies": {
     "bcrypt": "^6.0.0",
-    "cloudinary": "^2.9.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
-    "crypto": "^1.0.1",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.3.3",
+    "mongoose": "^9.3.3"
+  },
+  "devDependencies": {
     "nodemon": "^3.1.14"
   }
 }
