@@ -164,9 +164,9 @@ html.dark .admin-redesign .eyebrow, html.dark .admin-redesign .stat-card > small
 .admin-redesign .main, .admin-redesign .data-card, .admin-redesign .stat-card { min-width: 0; }
 .admin-redesign .back-button { flex-shrink: 0; }
 .admin-redesign .profile strong, .admin-redesign .priority-info strong, .admin-redesign h1 { overflow-wrap: anywhere; }
-.admin-redesign .sidebar { top: 48px; }
-.admin-redesign .app-shell, .admin-redesign .page, .admin-redesign { min-height: calc(100dvh - 48px); }
-.admin-redesign .map-page { height: calc(100dvh - 48px); }
+.admin-redesign .sidebar { top: 0; }
+.admin-redesign .app-shell, .admin-redesign .page, .admin-redesign { min-height: 100dvh; }
+.admin-redesign .map-page { height: 100dvh; }
 @media (max-width: 760px) { .admin-redesign .map-page { height: auto; } }
 @media (max-width: 520px) {
  .admin-redesign .sidebar { position: static; width: 100%; padding: 12px; flex-direction: row; flex-wrap: wrap; gap: 8px; }

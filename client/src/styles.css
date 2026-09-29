@@ -25,7 +25,7 @@ body {
 .layout {
   display: grid;
   grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
-  min-height: calc(100dvh - 120px);
+  min-height: calc(100dvh - 72px);
   height: auto;
   gap: 12px;
   padding: 12px;
@@ -173,9 +173,7 @@ button, a, input, select { -webkit-tap-highlight-color: transparent; }
 button:not(:disabled) { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .6; }
 :focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
-.appearance-bar { height: 48px; padding: 4px 16px; display: flex; justify-content: flex-end; align-items: center; background: var(--surface); border-bottom: 1px solid var(--line); }
-.theme-switch { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; color: var(--text); background: var(--surface); font-size: 13px; }
-.auth-page { min-height: calc(100dvh - 48px); display: grid; place-items: center; padding: 32px 16px; background: var(--bg); }
+.auth-page { min-height: 100dvh; display: grid; place-items: center; padding: 32px 16px; background: var(--bg); }
 .auth-card { width: min(100%, 480px); padding: clamp(22px, 5vw, 40px); border: 1px solid var(--line); border-radius: 20px; background: var(--surface); box-shadow: var(--shadow); overflow-wrap: anywhere; }
 .auth-card h1 { font-size: 28px; line-height: 1.2; margin: 8px 0 14px; font-weight: 700; }
 .auth-card p { color: var(--muted); margin: 0 0 16px; }
@@ -209,3 +207,47 @@ html.dark .form-success, html.dark .auth-card .form-success { color: #a0eac0; ba
 }
 .leaflet-container .leaflet-control-attribution { background: var(--surface); color: var(--muted); }
 .leaflet-container .leaflet-control-attribution a { color: var(--primary); }
+
+/* Shared floating control stays above Leaflet controls and clear of device insets. */
+.theme-switch {
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: 0 6px 24px #0003;
+  transition: transform 180ms ease, background-color 240ms ease, color 240ms ease, box-shadow 180ms ease;
+}
+.theme-switch:hover { transform: translateY(-3px); box-shadow: 0 9px 28px #0004; }
+.theme-switch:active { transform: scale(.92); }
+.theme-switch__motion { display: grid; place-items: center; width: 100%; height: 100%; border-radius: inherit; }
+.theme-switch__motion svg { animation: theme-icon-in 420ms cubic-bezier(.2, .8, .2, 1) both; }
+.theme-switch__motion::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 2px solid currentColor;
+  border-radius: inherit;
+  pointer-events: none;
+  animation: theme-ring-out 480ms ease-out both;
+}
+@keyframes theme-icon-in {
+  from { opacity: 0; transform: rotate(-90deg) scale(.5); }
+  to { opacity: 1; transform: rotate(0deg) scale(1); }
+}
+@keyframes theme-ring-out {
+  from { opacity: .45; transform: scale(.85); }
+  to { opacity: 0; transform: scale(1.45); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .theme-switch__motion::after { display: none; }
+  .theme-switch:hover, .theme-switch:active { transform: none; }
+}
