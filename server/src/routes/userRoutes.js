@@ -1,0 +1,10 @@
+import { Router } from "express";
+import { createUser, listUsers, getUser, updateUser, deleteUser } from "../controllers/userController.js";
+import { protect, allowRoles } from "../middleware/auth.js";
+const router = Router();
+router.get("/allAdmins", protect, allowRoles("admin"), listUsers);
+router.get("/adminsById/:id", protect, allowRoles("admin"), getUser);
+router.post("/createAdmins", protect, allowRoles("admin"), createUser);
+router.put("/updateAdmin/:id", protect, allowRoles("admin"), updateUser);
+router.delete("/deleteAdmin/:id", protect, allowRoles("admin"), deleteUser);
+export default router;

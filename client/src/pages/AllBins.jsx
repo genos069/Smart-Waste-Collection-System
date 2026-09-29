@@ -23,7 +23,10 @@ export default function AllBins() {
     if (removing || !window.confirm(all ? "Permanently delete every bin?" : `Remove ${ids.length} selected bin(s)?`)) return;
     setRemoving(true); setActionError("");
     try {
-      if (all) await deleteAllBins();
+      if (all) {
+        const result = await deleteAllBins();
+        if (result.protectedCount) setActionError(result.message);
+      }
       else {
         const results = await Promise.allSettled(ids.map(deleteBin));
         const failures = results.filter((result) => result.status === "rejected");

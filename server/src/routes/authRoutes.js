@@ -1,13 +1,12 @@
 import { Router } from "express";
-import { loginAdmin, forgotPassword, resetPassword, logout, getMe } from "../controllers/authController.js";
-import { protect } from "../middlewares/auth.js";
-
+import { rateLimit } from "express-rate-limit";
+import { login, forgotPassword, resetPassword, logout, getMe } from "../controllers/authController.js";
+import { protect } from "../middleware/auth.js";
 const router = Router();
-
-router.post("/login", loginAdmin);
-router.post("/forgot-password", forgotPassword);
-router.post("/reset-password", resetPassword);
+const authLimit = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: "draft-7", legacyHeaders: false, message: { message: "Too many attempts. Try again later." } });
+router.post("/login", authLimit, login);
+router.post("/forgot-password", authLimit, forgotPassword);
+router.post("/reset-password", authLimit, resetPassword);
 router.post("/logout", logout);
 router.get("/me", protect, getMe);
-
 export default router;

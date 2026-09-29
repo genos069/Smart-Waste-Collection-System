@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "create-admin": "node scripts/createAdmin.js"
   },
   "keywords": [],
   "author": "Room 15",
@@ -18,10 +19,15 @@
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.3.3"
+    "mongoose": "^9.3.3",
+    "nodemailer": "^10.0.11"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }

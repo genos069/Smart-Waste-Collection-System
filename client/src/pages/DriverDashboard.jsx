@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import MapView from "../components/MapView";
 import StatusPanel from "../components/StatusPanel";
 import { getTasks } from "../services/taskService";
@@ -7,161 +7,60 @@ import { updateStatus } from "../services/workflowService";
 import { haversineDistance } from "../utils/haversine";
 import { getRoute } from "../services/routingService";
 import { extractSteps } from "../utils/routing";
-
-const PROXIMITY_LIMIT_METERS = 50000;
+import useRemoteData from "../hooks/useRemoteData";
 
 export default function DriverDashboard() {
-  const [tasks, setTasks] = useState(null);
+  const { data: tasks, error, refresh } = useRemoteData(getTasks, 5000);
   const [userLocation, setUserLocation] = useState(null);
-
-  const [currentTarget, setCurrentTarget] = useState(null);
-  const [distanceToTarget, setDistanceToTarget] = useState(null);
-  const [canPickup, setCanPickup] = useState(false);
+  const [locationError, setLocationError] = useState(() => navigator.geolocation ? "" : "Geolocation is not supported by this browser");
+  const [actionError, setActionError] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-
-  const [routeGeo, setRouteGeo] = useState(null);
-  const [steps, setSteps] = useState([]);
-  const [eta, setEta] = useState(null);
-
-  const loadTasks = async () => {
-    const data = await getTasks();
-    setTasks(data);
-  };
+  const [directions, setDirections] = useState(null);
+  const currentTarget = tasks?.nextTarget || null;
+  const targetId = currentTarget?.id;
+  const targetLat = currentTarget?.lat, targetLng = currentTarget?.lng;
+  const distanceToTarget = useMemo(() => currentTarget && userLocation ? haversineDistance(userLocation.lat, userLocation.lng, currentTarget.lat, currentTarget.lng) : null, [currentTarget, userLocation]);
 
   useEffect(() => {
-    loadTasks();
-    const t = setInterval(loadTasks, 5000);
-    return () => clearInterval(t);
-  }, []);
-
-
-  useEffect(() => {
-    const id = navigator.geolocation.watchPosition(
-      async (pos) => {
-        const loc = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude
-        };
-        setUserLocation(loc);
-        await updateLocation(loc);
-      },
-      console.error,
-      { enableHighAccuracy: true }
-    );
-
-    return () => navigator.geolocation.clearWatch(id);
+    let active = true;
+    const watcher = navigator.geolocation?.watchPosition(async ({ coords }) => {
+      const loc = { lat: coords.latitude, lng: coords.longitude };
+      try { await updateLocation(loc); if (active) { setUserLocation(loc); setLocationError(""); } }
+      catch (err) { if (active) setLocationError(err.message); }
+    }, (err) => { if (active) setLocationError(err.message); }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 });
+    return () => { active = false; if (watcher !== undefined) navigator.geolocation.clearWatch(watcher); };
   }, []);
 
   useEffect(() => {
-    if (!tasks || !userLocation) return;
-
-    let next = null;
-    const pending = tasks.pickups.filter(p => p.status === "pending");
-
-    if (pending.length > 0) {
-      let nearest = pending[0];
-      let minDist = Infinity;
-
-      pending.forEach(p => {
-        const d = haversineDistance(
-          userLocation.lat,
-          userLocation.lng,
-          p.lat,
-          p.lng
-        );
-
-        if (d < minDist) {
-          minDist = d;
-          nearest = p;
-        }
-      });
-
-      next = nearest;
-    } else if (
-      tasks.pickups.every(p => p.status === "picked") &&
-      tasks.warehouse.status !== "completed"
-    ) {
-      next = tasks.warehouse;
-    }
-
-    setCurrentTarget(next);
-
-    if (next) {
-      const dist = haversineDistance(
-        userLocation.lat,
-        userLocation.lng,
-        next.lat,
-        next.lng
-      );
-
-      setDistanceToTarget(dist);
-      setCanPickup(dist <= PROXIMITY_LIMIT_METERS);
-    } else {
-      setDistanceToTarget(null);
-      setCanPickup(false);
-    }
-  }, [tasks, userLocation]);
-
-  useEffect(() => {
-    if (!userLocation || !currentTarget) return;
-
-    const points = [
-      [userLocation.lat, userLocation.lng],
-      [currentTarget.lat, currentTarget.lng]
-    ];
-
-    getRoute(points).then(route => {
-      if (!route) return;
-
-      setRouteGeo(route.geometry.coordinates.map(c => [c[1], c[0]]));
-      setSteps(extractSteps(route));
-      setEta(Math.round(route.duration / 60));
-    });
-  }, [userLocation, currentTarget]);
+    if (!userLocation || !targetId) return;
+    let active = true;
+    getRoute([[userLocation.lat, userLocation.lng], [targetLat, targetLng]]).then((route) => {
+      if (active) setDirections(route ? { targetId, geo: route.geometry.coordinates.map(([lng, lat]) => [lat, lng]), steps: extractSteps(route), eta: Math.round(route.duration / 60) } : null);
+    }).catch(() => { if (active) setDirections(null); });
+    return () => { active = false; };
+  }, [userLocation, targetId, targetLat, targetLng]);
 
   const handleAction = async () => {
-    if (!currentTarget) return;
-
-    setIsProcessing(true);
-    setCanPickup(false);
-
-    const type =
-      currentTarget.id === "warehouse" ? "warehouse" : "pickup";
-
-    await updateStatus({
-      type,
-      id: currentTarget.id
-    });
-
-    setCurrentTarget(null);
-    setDistanceToTarget(null);
-
-    setTimeout(loadTasks, 300);
-    setIsProcessing(false);
+    if (!currentTarget || isProcessing) return;
+    setIsProcessing(true); setActionError("");
+    try {
+      if (!navigator.geolocation) throw new Error("Geolocation is not supported");
+      const position = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }));
+      const freshLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
+      await updateLocation(freshLocation);
+      setUserLocation(freshLocation);
+      await updateStatus({ type: currentTarget.type, id: currentTarget.id });
+      await refresh();
+    } catch (err) { setActionError(err.message); }
+    finally { setIsProcessing(false); }
   };
-
-  return (
-    <div className="layout">
-      <aside className="sidebar">
-        <StatusPanel
-          distanceToTarget={distanceToTarget}
-          eta={eta}
-          steps={steps}
-          nextStep={steps[0]}
-          currentTarget={currentTarget}
-          canPickup={canPickup}
-          isProcessing={isProcessing}
-          onAction={handleAction}
-        />
-      </aside>
-
-      <section className="map-wrap">
-        <MapView
-          tasks={tasks}
-          userLocation={userLocation}
-          routeGeo={routeGeo}
-        />
-      </section>
-    </div>
-  );
+  const route = directions?.targetId === targetId ? directions : null;
+  return <div className="layout">
+    <aside className="sidebar">
+      {(error || actionError || locationError) && <p role="alert" className="error">{error || actionError || locationError}</p>}
+      {tasks?.setupRequired && <p role="alert">Ask an administrator to configure BMC and dumpyard coordinates.</p>}
+      <StatusPanel distanceToTarget={distanceToTarget} eta={route?.eta} steps={route?.steps || []} nextStep={route?.steps?.[0]} currentTarget={currentTarget} canPickup={distanceToTarget !== null && distanceToTarget <= 100 && !locationError} isProcessing={isProcessing} onAction={handleAction} />
+    </aside>
+    <section className="map-wrap"><MapView tasks={tasks} userLocation={userLocation} routeGeo={route?.geo} /></section>
+  </div>;
 }

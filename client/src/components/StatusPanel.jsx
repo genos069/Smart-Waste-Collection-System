@@ -1,4 +1,3 @@
-import { useState } from "react";
 
 export default function StatusPanel({
   distanceToTarget,
@@ -10,19 +9,6 @@ export default function StatusPanel({
   isProcessing,
   onAction
 }) {
-
-  const [isDropped, setIsDropped] = useState(false);
-
-  const handleClick = () => {
-    if (currentTarget?.id === "warehouse") {
-      setIsDropped(true);
-      setTimeout(() => {
-        setIsDropped(false);
-      }, 10000);
-    }
-
-    onAction();
-  };
 
   return (
     <div className="panel">
@@ -38,7 +24,7 @@ export default function StatusPanel({
       <div className="card">
         <p className="label">Distance</p>
         <p className="value">
-          {distanceToTarget
+          {distanceToTarget !== null && distanceToTarget !== undefined
             ? `${distanceToTarget.toFixed(1)} m`
             : "—"}
         </p>
@@ -47,20 +33,20 @@ export default function StatusPanel({
       <div className="card">
         <p className="label">ETA</p>
         <p className="value">
-          {eta ? `${eta} mins` : "—"}
+          {eta !== null && eta !== undefined ? `${eta} mins` : "—"}
         </p>
       </div>
 
       <div className="card">
         {canPickup && currentTarget ? (
-          <button className="btn" onClick={handleClick} disabled={isProcessing}>
+          <button className="btn" onClick={onAction} disabled={isProcessing}>
             {isProcessing
               ? "Processing..."
-              : currentTarget?.id === "warehouse"
-                ? isDropped
-                  ? "Done ✅"
-                  : "Drop at Dumpyard 🚮"
-                : "Pick garbage 🧹"}
+              : currentTarget?.type === "warehouse"
+                ? "Drop at Dumpyard 🚮"
+                : currentTarget?.type === "home"
+                  ? "Complete trip at BMC"
+                  : "Pick garbage 🧹"}
           </button>
         ) : (
           <p className="subtle">
