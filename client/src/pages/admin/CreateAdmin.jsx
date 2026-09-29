@@ -1,3 +1,4 @@
+import { passwordError } from "../../utils/validation";
 import { useState } from "react";
 import Icon from "../../components/admin/Icon";
 import { useNavigate } from "react-router-dom";
@@ -15,6 +16,8 @@ export default function CreateAdmin() {
   const submit = async (event) => {
     event.preventDefault();
     if (saving) return;
+    const invalid = passwordError(form.password);
+    if (!form.firstName.trim() || !form.lastName.trim() || invalid) { setError(invalid || "First and last names cannot be blank."); return; }
     setSaving(true); setError("");
     try {
       await createAdmin({ ...form, firstName: form.firstName.trim(), lastName: form.lastName.trim(), email: form.email.trim() });
@@ -33,10 +36,10 @@ export default function CreateAdmin() {
         <form className="form-card" onSubmit={submit}>
           <div className="form-section-heading"><span className="step">01</span><div><h2>Personal details</h2><p>Enter the team member's basic information.</p></div></div>
           <div className="two-columns">
-            <label>First name<input required name="firstName" value={form.firstName} onChange={update} placeholder="e.g. Amara" /></label>
-            <label>Last name<input required name="lastName" value={form.lastName} onChange={update} placeholder="e.g. Green" /></label>
+            <label>First name<input required maxLength={120} name="firstName" value={form.firstName} onChange={update} placeholder="e.g. Amara" /></label>
+            <label>Last name<input required maxLength={120} name="lastName" value={form.lastName} onChange={update} placeholder="e.g. Green" /></label>
           </div>
-          <label>Work email<input required type="email" name="email" value={form.email} onChange={update} placeholder="name@company.com" /></label>
+          <label>Work email<input required maxLength={254} autoComplete="email" type="email" name="email" value={form.email} onChange={update} placeholder="name@company.com" /></label>
           <div className="divider" />
           <div className="form-section-heading"><span className="step">02</span><div><h2>Access & security</h2><p>Assign their role and a temporary password.</p></div></div>
           <label>Permission level
@@ -46,7 +49,7 @@ export default function CreateAdmin() {
           </label>
           <label>Temporary password
             <span className="input-with-action">
-              <input required minLength={8} type={visible ? "text" : "password"} name="password" value={form.password} onChange={update} placeholder="Minimum 8 characters" />
+              <input required autoComplete="new-password" minLength={8} type={visible ? "text" : "password"} name="password" value={form.password} onChange={update} placeholder="Minimum 8 characters" />
               <button type="button" onClick={() => setVisible(!visible)}>{visible ? "Hide" : "Show"}</button>
             </span>
           </label>

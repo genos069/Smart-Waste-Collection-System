@@ -1,17 +1,15 @@
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import L from "leaflet";
 
 function FitBounds({ points, disable }) {
   const map = useMap();
-  const hasFit = useRef(false);
 
   useEffect(() => {
     if (disable) return;
     if (!points || points.length === 0) return;
 
     map.fitBounds(points, { padding: [50, 50] });
-    hasFit.current = true;
   }, [points, disable, map]);
 
   return null;
@@ -20,6 +18,11 @@ function FitBounds({ points, disable }) {
 function LiveFollow({ userLocation }) {
   const map = useMap();
   const hasCentered = useRef(false);
+  useEffect(() => {
+    const observer = new ResizeObserver(() => map.invalidateSize());
+    observer.observe(map.getContainer());
+    return () => observer.disconnect();
+  }, [map]);
 
   useEffect(() => {
     if (!userLocation) return;
@@ -46,8 +49,6 @@ function LiveFollow({ userLocation }) {
 
 export default function MapView({ tasks, userLocation, routeGeo }) {
 
-  const [followUser] = useState(true);
-
   const boundsPoints = [];
 
   const userIcon = new L.Icon({
@@ -65,11 +66,6 @@ export default function MapView({ tasks, userLocation, routeGeo }) {
     iconSize: [32, 32],
   });
 
-  const binIcon = new L.Icon({
-    iconUrl: "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png",
-    iconSize: [32, 32],
-  });
-
   if (userLocation) boundsPoints.push([userLocation.lat, userLocation.lng]);
   tasks?.pickups?.forEach(p => boundsPoints.push([p.lat, p.lng]));
   if (tasks?.warehouse) boundsPoints.push([tasks.warehouse.lat, tasks.warehouse.lng]);
@@ -81,15 +77,14 @@ export default function MapView({ tasks, userLocation, routeGeo }) {
       zoom={15}
       className="map"
     >
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
       <LiveFollow userLocation={userLocation} />
 
-      <FitBounds points={boundsPoints} disable={followUser && !!userLocation} />
-
+      <FitBounds points={boundsPoints} disable={!!userLocation} />
 
       {userLocation && (
-        <Marker position={[userLocation.lat, userLocation.lng]}>
+        <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
           <Popup>You are here</Popup>
         </Marker>
       )}

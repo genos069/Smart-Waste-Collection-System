@@ -1,3 +1,4 @@
+import { useAuth } from "../../context/AuthContext";
 import { useMemo, useState } from "react";
 import Icon from "../../components/admin/Icon";
 import RequestState from "../../components/admin/RequestState";
@@ -8,6 +9,7 @@ import useRemoteData from "../../hooks/useRemoteData";
 
 export default function AdminList() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data, loading, error, refresh } = useRemoteData(getAdmins);
   const admins = useMemo(() => (data?.data || []).map((admin) => ({ ...admin, id: admin._id })), [data]);
   const [actionError, setActionError] = useState("");
@@ -15,6 +17,7 @@ export default function AdminList() {
   const onBack = () => navigate("/admin-dashboard");
   const onCreate = () => navigate("/create-users");
   const onDelete = async (id) => {
+    if (removing !== null || id === user?.id) return;
     if (!window.confirm("Remove this account? This cannot be undone.")) return;
     setRemoving(id); setActionError("");
     try { await deleteAdmin(id); await refresh(); }
@@ -47,7 +50,7 @@ export default function AdminList() {
                   <td><span className="role-pill">{admin.type}</span></td>
                   <td className="muted">{formatDate(admin.createdAt)}</td>
                   <td className="muted">{formatDate(admin.updatedAt)}</td>
-                  <td><button className="delete-button" disabled={removing !== null} onClick={() => onDelete(admin.id)}>{removing === admin.id ? "Removing…" : "Remove"}</button></td>
+                  <td><button className="delete-button" disabled={removing !== null || admin.id === user?.id} title={admin.id === user?.id ? "You cannot remove your own account" : "Remove account"} onClick={() => onDelete(admin.id)}>{removing === admin.id ? "Removing…" : "Remove"}</button></td>
                 </tr>
               ))}
             </tbody>

@@ -10,7 +10,7 @@ import { extractSteps } from "../utils/routing";
 import useRemoteData from "../hooks/useRemoteData";
 
 export default function DriverDashboard() {
-  const { data: tasks, error, refresh } = useRemoteData(getTasks, 5000);
+  const { data: tasks, loading, error, refresh } = useRemoteData(getTasks, 5000);
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState(() => navigator.geolocation ? "" : "Geolocation is not supported by this browser");
   const [actionError, setActionError] = useState("");
@@ -57,9 +57,10 @@ export default function DriverDashboard() {
   const route = directions?.targetId === targetId ? directions : null;
   return <div className="layout">
     <aside className="sidebar">
+      {loading && <p role="status">Loading collection tasks…</p>}
       {(error || actionError || locationError) && <p role="alert" className="error">{error || actionError || locationError}</p>}
       {tasks?.setupRequired && <p role="alert">Ask an administrator to configure BMC and dumpyard coordinates.</p>}
-      <StatusPanel distanceToTarget={distanceToTarget} eta={route?.eta} steps={route?.steps || []} nextStep={route?.steps?.[0]} currentTarget={currentTarget} canPickup={distanceToTarget !== null && distanceToTarget <= 100 && !locationError} isProcessing={isProcessing} onAction={handleAction} />
+      {tasks && <StatusPanel distanceToTarget={distanceToTarget} eta={route?.eta} steps={route?.steps || []} nextStep={route?.steps?.[0]} currentTarget={currentTarget} canPickup={distanceToTarget !== null && distanceToTarget <= 100 && !locationError} isProcessing={isProcessing} onAction={handleAction} />}
     </aside>
     <section className="map-wrap"><MapView tasks={tasks} userLocation={userLocation} routeGeo={route?.geo} /></section>
   </div>;

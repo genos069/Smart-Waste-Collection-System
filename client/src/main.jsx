@@ -1,16 +1,18 @@
-import { BrowserRouter } from 'react-router-dom'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import "./styles.css"
-import "./styles/admin-redesign.css"
-import App from './App.jsx'
-import "leaflet/dist/leaflet.css"
+import "leaflet/dist/leaflet.css";
+import { BrowserRouter } from "react-router-dom";
+import { createRoot } from "react-dom/client";
+import { ThemeProvider } from "./context/ThemeProvider";
 import { AuthProvider } from "./context/AuthProvider";
+import "./styles.css";
+import "./styles/admin-redesign.css";
+import App from "./App.jsx";
 
-createRoot(document.getElementById('root')).render(
-  <AuthProvider>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </AuthProvider>
-)
+createRoot(document.getElementById("root")).render(
+  <ThemeProvider>
+    <AuthProvider>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </AuthProvider>
+  </ThemeProvider>,
+);

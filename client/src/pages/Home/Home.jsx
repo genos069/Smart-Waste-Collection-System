@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import "./Home.css";
+import { Link } from "react-router-dom";
 
 const searchItems = [
   {
@@ -54,20 +55,9 @@ const getResultIcon = (type) => {
 
 const Home = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Apply dark class to body
-  useEffect(() => {
-    if (darkMode) {
-      document.body.classList.add("dark");
-    } else {
-      document.body.classList.remove("dark");
-    }
-  }, [darkMode]);
-
   const toggleMenu = () => setMenuOpen(!menuOpen);
-  const toggleTheme = () => setDarkMode(!darkMode);
 
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value);
@@ -98,7 +88,7 @@ const Home = () => {
 
   return (
     <>
-      <div className="app-shell">
+      <div className="home-page app-shell">
         <header>BMC Integrated Solid Waste Management System</header>
 
         <div className="navbar">
@@ -108,13 +98,13 @@ const Home = () => {
             )}
           </div>
 
-          <div className="menu-icon" onClick={toggleMenu}>
+          <button type="button" className="menu-icon" onClick={toggleMenu} aria-label="Toggle navigation" aria-expanded={menuOpen} aria-controls="home-navigation">
             <div></div>
             <div></div>
             <div></div>
-          </div>
+          </button>
 
-          <ul className={menuOpen ? "active" : ""}>
+          <ul id="home-navigation" className={menuOpen ? "active" : ""}>
             <li>
               <a href="https://www.berhampur.gov.in/about-bemc/">About Us</a>
             </li>
@@ -129,13 +119,11 @@ const Home = () => {
               </a>
             </li>
             <li>
-              <a href="/login">Login</a>
+              <Link to="/login">Login</Link>
             </li>
           </ul>
 
-          <div className="theme-toggle" onClick={toggleTheme}>
-            {darkMode ? "🌙" : "🌞"}
-          </div>
+
         </div>
 
         <div className="main-content">
