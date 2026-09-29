@@ -46,7 +46,7 @@ export default function AdminMapPage() {
         <p className="subtitle">Give this collection point a clear name and select its location.</p>
         <RequestState loading={loading} error={error} onRetry={refresh} />
         <form onSubmit={submit}>
-          <label>Location name<input required value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. BMC Market Street" /></label>
+          <label>Location name<input required maxLength={120} value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. BMC Market Street" /></label>
           <label>Latitude<input required type="number" step="any" min="-90" max="90" value={coords.lat} onChange={(event) => setCoords({ ...coords, lat: event.target.value })} placeholder="e.g. 19.35767" /></label>
           <label>Longitude<input required type="number" step="any" min="-180" max="180" value={coords.lng} onChange={(event) => setCoords({ ...coords, lng: event.target.value })} placeholder="e.g. 84.87178" /></label>
           <div className="setup-note"><Icon name="leaf" /><p><strong>Ready to monitor</strong><span>This bin will appear on your dashboard and in the collection network after saving.</span></p></div>

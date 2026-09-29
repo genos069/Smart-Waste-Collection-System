@@ -37,3 +37,22 @@ test("request surfaces message, error and non-JSON HTTP failures", async () => {
     await assert.rejects(request("/test"), (error) => error.message === message && error.status === response.status);
   }
 });
+
+test("a successful HTML fallback is rejected instead of masquerading as empty API data", async () => {
+  globalThis.fetch = async () => new Response("<!doctype html><html></html>");
+  await assert.rejects(request("/allBins"), /invalid response/);
+});
+test("network failures and timeouts have actionable messages", async () => {
+  globalThis.fetch = async () => { throw new TypeError("Failed to fetch"); };
+  await assert.rejects(request("/login"), /Could not reach the server/);
+  globalThis.fetch = async () => { throw new DOMException("Timeout", "TimeoutError"); };
+  await assert.rejects(request("/login"), /took too long/);
+});
+test("requests have a timeout and preserve an explicit cancellation signal", async () => {
+  const controller = new AbortController();
+  globalThis.fetch = async (_url, options) => {
+    assert.equal(options.signal, controller.signal);
+    return new Response(null, { status: 204 });
+  };
+  assert.equal(await request("/test", { signal: controller.signal }), null);
+});

@@ -4,6 +4,15 @@
     <meta charset="UTF-8" />
     <link rel="icon" href="./src/assets/bin.png" type="image/png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      try {
+        const saved = localStorage.getItem("smart-waste-theme");
+        const dark = saved === "dark" || (saved !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", dark);
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+        document.documentElement.style.colorScheme = dark ? "dark" : "light";
+      } catch { /* React initializes the theme if storage is blocked. */ }
+    </script>
     <title>Smart Waste Collection System</title>
   </head>
   <body>
