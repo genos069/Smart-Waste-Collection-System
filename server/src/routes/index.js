@@ -15,5 +15,5 @@ router.use(collectionRoutes);
 router.use(locationRoutes);
 router.use(taskRoutes);
 router.use(truckRoutes);
-router.get("/health", (req, res) => res.json({ msg: "Server is Running" }));
+router.get("/health", (req, res) => {res.status(200).json({status: "online",service: "smart waste management system",version: "1.0.0",});});
 export default router;
