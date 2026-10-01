@@ -11,7 +11,7 @@ export async function simulateBinFill(random = Math.random) {
     });
   }
 }
-export function startBinSimulator(intervalMs = 30000) {
+export function startBinSimulator(intervalMs = 60000) {
   let stopped = false, timer;
   const tick = async () => {
     try { await simulateBinFill(); } catch (err) { console.error("Bin simulation failed:", err.name); }
